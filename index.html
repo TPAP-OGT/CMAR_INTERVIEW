@@ -69,6 +69,13 @@
     white-space: pre-line;
     text-wrap: balance;
   }
+  h1 .title-light {
+    display: block;
+    margin-top: 0.4em;
+    font-size: 0.9em;
+    font-weight: 400;
+  }
+
   .intro {
     margin: 1rem 0 0;
     max-width: 38rem;
@@ -184,7 +191,7 @@ const SITE = {
 
 const VIDEOS = [
   {
-    title: "Overall Construction Sequence Timeline",
+    title: "Construction Sequence Timeline",
     description: "",
     link: "https://youtu.be/UgsgMeATXAo"
   },
@@ -247,7 +254,15 @@ function el(tag, props, children) {
 }
 
 document.title = SITE.title.replace(/\s*\n\s*/g, " ");
-document.getElementById("site-title").textContent = SITE.title;
+const titleEl = document.getElementById("site-title");
+const titleLines = SITE.title.split("\n");
+titleLines.forEach((line, i) => {
+  if (i > 0) titleEl.appendChild(document.createTextNode("\n"));
+  titleEl.appendChild(el(i === titleLines.length - 1 ? "span" : "span", {
+    textContent: line,
+    className: i === titleLines.length - 1 ? "title-light" : ""
+  }));
+});
 if (SITE.intro) {
   const introEl = document.getElementById("site-intro");
   introEl.textContent = SITE.intro;
