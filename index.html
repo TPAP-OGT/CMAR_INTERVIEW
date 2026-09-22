@@ -168,10 +168,11 @@
    EDIT THIS SECTION ONLY
    ----------------------------------------------------------
    For each video, paste its link into `link` below.
-   YouTube: upload the video, set Visibility to "Unlisted", and leave
-   "Allow embedding" on. Then copy the video's link (youtu.be/... or
-   youtube.com/watch?v=...).
-   Google Drive links also still work (set sharing to "Anyone with the link").
+   Vimeo: upload the video, set privacy as you'd like (e.g. Hide from
+   Vimeo, plus a password or domain restriction on a paid plan), then
+   copy its link (vimeo.com/XXXXXXXXX, or the player.vimeo.com/video/...
+   embed link, or the .../XXXXXXXXX/HASH unlisted link).
+   YouTube and Google Drive links also still work.
    ========================================================== */
 
 const SITE = {
@@ -185,12 +186,12 @@ const VIDEOS = [
   {
     title: "Overall Construction Sequence Timeline",
     description: "",
-    link: "https://youtu.be/6-vg6GqjPjc"
+    link: "https://youtu.be/UgsgMeATXAo"
   },
   {
     title: "Completed Building Walkthrough",
     description: "",
-    link: "https://youtu.be/PVlJzKITC-Y"
+    link: "https://youtu.be/j0YZbbG0b0Q"
   }
 ];
 
@@ -200,6 +201,19 @@ const VIDEOS = [
 
 function parseVideo(link) {
   const s = String(link || "").trim();
+
+  // Vimeo: vimeo.com/ID, vimeo.com/ID/HASH (unlisted), player.vimeo.com/video/ID(?h=HASH)
+  const vm = s.match(/player\.vimeo\.com\/video\/(\d+)(?:\?h=([\w-]+))?/) ||
+             s.match(/vimeo\.com\/(\d+)(?:\/([\w-]+))?/);
+  if (vm) {
+    const id = vm[1], hash = vm[2];
+    const q = hash ? ("?h=" + hash) : "";
+    return {
+      embed: "https://player.vimeo.com/video/" + id + q,
+      watch: "https://vimeo.com/" + id + (hash ? "/" + hash : ""),
+      where: "Vimeo"
+    };
+  }
 
   // YouTube: youtu.be/ID, youtube.com/watch?v=ID, /embed/ID, /shorts/ID, /live/ID
   const yt = s.match(/youtu\.be\/([\w-]{11})/) ||
