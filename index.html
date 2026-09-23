@@ -109,12 +109,14 @@
     border-radius: 12px;
     overflow: hidden;
   }
-  .frame iframe {
+  .frame iframe,
+  .frame video {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     border: 0;
+    background: var(--frame);
   }
   .frame.empty {
     display: grid;
@@ -193,12 +195,12 @@ const VIDEOS = [
   {
     title: "Construction Sequence Timeline",
     description: "",
-    link: "https://drive.google.com/file/d/14N_qkss8T3i4RDRo1BYqQtH6ns6PswwU/preview"
+    link: "https://www.dropbox.com/scl/fi/6b8g7btxcrm2c7a9gltop/ORD-OGT_Animation-260922.mp4?rlkey=gbabxwebwrejjylki7y7yt3tt&st=p7inp2lw&dl=0"
   },
   {
     title: "Completed Building Walkthrough",
     description: "",
-    link: "https://drive.google.com/file/d/1qNYN4EoMYXamlhDR9vwS1UcGV62GAPla/preview"
+    link: "https://www.dropbox.com/scl/fi/yhqocoei3lnxupm5nfmm7/Walkthrough_260922.mp4?rlkey=jcynz3w09tw9d5lzdg6j6qhcz&st=p0a57dgu&dl=0"
   }
 ];
 
@@ -209,6 +211,19 @@ const VIDEOS = [
 function parseVideo(link) {
   const s = String(link || "").trim();
 
+  // Dropbox: www.dropbox.com/... (share link) -> direct file via raw=1
+  const db = s.match(/dropbox\.com\/(scl\/fi|s)\/[^\s"]+/);
+  if (db) {
+    let direct = s.replace(/([?&])dl=[01]/, "$1").replace(/[?&]$/, "");
+    direct += direct.includes("?") ? "&raw=1" : "?raw=1";
+    return {
+      kind: "video",
+      src: direct,
+      watch: s,
+      where: "Dropbox"
+    };
+  }
+
   // Vimeo: vimeo.com/ID, vimeo.com/ID/HASH (unlisted), player.vimeo.com/video/ID(?h=HASH)
   const vm = s.match(/player\.vimeo\.com\/video\/(\d+)(?:\?h=([\w-]+))?/) ||
              s.match(/vimeo\.com\/(\d+)(?:\/([\w-]+))?/);
@@ -216,6 +231,7 @@ function parseVideo(link) {
     const id = vm[1], hash = vm[2];
     const q = hash ? ("?h=" + hash) : "";
     return {
+      kind: "iframe",
       embed: "https://player.vimeo.com/video/" + id + q,
       watch: "https://vimeo.com/" + id + (hash ? "/" + hash : ""),
       where: "Vimeo"
@@ -228,6 +244,7 @@ function parseVideo(link) {
              s.match(/youtube(?:-nocookie)?\.com\/(?:embed|shorts|live|v)\/([\w-]{11})/);
   if (yt) {
     return {
+      kind: "iframe",
       embed: "https://www.youtube-nocookie.com/embed/" + yt[1] + "?rel=0&playsinline=1",
       watch: "https://www.youtube.com/watch?v=" + yt[1],
       where: "YouTube"
@@ -238,6 +255,7 @@ function parseVideo(link) {
   const dr = s.match(/drive\.google\.com\/file\/d\/([\w-]{10,})/) || s.match(/[?&]id=([\w-]{10,})/);
   if (dr) {
     return {
+      kind: "iframe",
       embed: "https://drive.google.com/file/d/" + dr[1] + "/preview",
       watch: "https://drive.google.com/file/d/" + dr[1] + "/view",
       where: "Google Drive"
@@ -281,15 +299,27 @@ VIDEOS.forEach((v, i) => {
 
   if (vid) {
     const frame = el("div", { className: "frame" });
-    const iframe = el("iframe", {
-      src: vid.embed,
-      title: v.title,
-      loading: i === 0 ? "eager" : "lazy",
-      allowFullscreen: true
-    });
-    iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen");
-    iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-    frame.appendChild(iframe);
+
+    if (vid.kind === "video") {
+      const video = el("video", {
+        src: vid.src,
+        controls: true,
+        preload: i === 0 ? "metadata" : "none",
+        playsInline: true
+      });
+      frame.appendChild(video);
+    } else {
+      const iframe = el("iframe", {
+        src: vid.embed,
+        title: v.title,
+        loading: i === 0 ? "eager" : "lazy",
+        allowFullscreen: true
+      });
+      iframe.setAttribute("allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen");
+      iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+      frame.appendChild(iframe);
+    }
+
     article.appendChild(frame);
 
     article.appendChild(el("a", {
