@@ -325,13 +325,6 @@ VIDEOS.forEach((v, i) => {
 
     article.appendChild(frame);
 
-    article.appendChild(el("a", {
-      className: "fallback",
-      href: vid.watch,
-      target: "_blank",
-      rel: "noopener noreferrer",
-      textContent: "Video not playing? Watch it on " + vid.where
-    }));
   } else {
     article.appendChild(el("div", {
       className: "frame empty",
